@@ -60,20 +60,21 @@ var checkHtmlFile = function(htmlfile, checksfile) {
 var checkURL = function(url, checksfile) {
   var out = {};
   rest.get(url).on('complete', function(result) {
-    if (result instanceof Error) {
-      console.log('Error: ' + result.message);
-      process.exit(1);
-    } else {
-      $ = cheerio.load(result);
-      var checks = loadChecks(checksfile).sort();
-      for(var ii in checks) {
-        var present = $(checks[ii]).length > 0;
-        out[checks[ii]] = present;
-      }
+  if (result instanceof Error) {
+    console.log('Error: ' + result.message);
+    process.exit(1);
+  } else {
+    $ = cheerio.load(result);
+    var checks = loadChecks(checksfile).sort();
+    for(var ii in checks) {
+      var present = $(checks[ii]).length > 0;
+      out[checks[ii]] = present;
     }
+    var outJson = JSON.stringify(out, null, 4);
+    console.log(outJson);
+  }
   });
-  return out;
-};
+}
 
 var clone = function(fn) {
     // Workaround for commander.js issue.
@@ -84,15 +85,17 @@ var clone = function(fn) {
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists))
         .option('-u --url <html_file>', 'Path to url')
         .parse(process.argv);
     if (program.url)
       var checkJson = checkURL(program.url, program.checks);
-    else
+    else if (program.file) {
       var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+      var outJson = JSON.stringify(checkJson, null, 4);
+      console.log(outJson);
+    }
+
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
